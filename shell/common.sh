@@ -9,4 +9,5 @@ source $DOT_FILES/shell/save-directory.sh
 source $DOT_FILES/shell/prompt.sh
 source $DOT_FILES/shell/git.sh
 
+[[ $OS == "Windows_NT" ]] && source $DOT_FILES/shell/windows.sh
 [[ `uname -s` == 'Darwin' ]] && source $DOT_FILES/shell/osx.sh

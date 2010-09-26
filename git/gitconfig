@@ -1,9 +1,10 @@
 [user]
-  name = Bodaniel Jeanes
-  email = me@bjeanes.com
+    name = ryebread
+    email = hhdslb@gmail.com
+[github]
+	user = ryebread
 [merge]
   summary = true
-  tool = opendiff
 [alias]
   co = checkout
   put = push origin HEAD
@@ -17,7 +18,6 @@
   status = auto
   ui = auto
 [core]
-  editor = mate -w
   excludesfile = ~/.gitignore
   whitespace = fix
 [branch]
