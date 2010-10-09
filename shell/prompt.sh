@@ -76,12 +76,12 @@ function prompt_vcs_if_bash() {
     fi
 }
 
-RPS1='$(${DOT_FILES}/misc/vcprompt.py -f $(color red)‹%b:%h›$(color reset))'
+RPS1='$(${DOT_FILES}/misc/vcprompt.py -f ‹%b:%h›)'
 
 if [[ $OS == "Windows_NT" ]]; then
     PS1='\[\033]0;$MSYSTEM:\w\007
 \033[32m\]\u@\h \[\033[33m\w$(__git_ps1)\033[0m\]
 $ ' 
 else
-    PS1="\$(color blue)\$(prompt_pwd)\$(prompt_vcs_if_bash) \$(color \$(prompt_color))\$(prompt_char)\$(color reset) "
+    PS1="\[\$(color blue)\]\$(prompt_pwd)\[\$(color red)\]\$(prompt_vcs_if_bash) \[\$(color \$(prompt_color))\]\$(prompt_char)\[\$(color reset)\] "
 fi
