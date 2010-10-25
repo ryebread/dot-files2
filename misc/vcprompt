@@ -51,7 +51,7 @@ __version__ = (0, 1, 5)
 if '--without-environment' in sys.argv and \
    sys.argv[1] != '--without-environment':
     output = "The '--without-environment' option must come before any "
-    print "%s other options." % output
+    print >> sys.stderr, '%s other options.' % output
     sys.exit(1)
 
 # we need to get this in early because callbacks are always called after
@@ -102,7 +102,6 @@ def sorted_alpha(sortme, unique=True):
 
     """
     upper, lower, digit, punctuation, passed = ([], [], [], [], [])
-    passed = []
     for char in sortme:
         # skip duplicates
         if unique and char in passed:
@@ -125,9 +124,9 @@ def sorted_alpha(sortme, unique=True):
 def systems():
     """Prints all available systems to stdout."""
     for system in SYSTEMS:
-        name = getattr(system, 'name', system.__name__)
-        desc = getattr(system, 'description', '')
-        output = "%s: %s" % (name, desc)
+        doc = system.__doc__.split('\n')
+        name, desc = filter(bool, map(lambda x: x.strip(), doc))
+        output = '%s: %s' % (name, desc)
         print output
     sys.exit(0)
 
@@ -146,7 +145,7 @@ def values(option, opt, value, parser, *args, **kwargs):
     sys.exit(0)
 
 
-def vcs(name, description):
+def vcs(function):
     """
     Adds the given ``name`` and ``description`` as attributes on the
     wrapped function.
@@ -162,13 +161,8 @@ def vcs(name, description):
              "The fast version continue system".
 
     """
-
-    def wrapped(function):
-        function.name = name
-        function.description = name
-        SYSTEMS.append(function)
-        return function
-    return wrapped
+    SYSTEMS.append(function)
+    return function
 
 
 def version(*args):
@@ -218,7 +212,6 @@ def vcprompt(path, formats, unknown, *args, **kwargs):
            Defaults to all systems.
 
     """
-
     paths = os.path.abspath(os.path.expanduser(path)).split('/')
     depth = kwargs.get('depth', 0)
     systems = kwargs.get('systems', None)
@@ -300,8 +293,13 @@ def main():
     return output
 
 
-@vcs('Bazaar', 'The Bazaar version control system')
+@vcs
 def bzr(path, string, unknown):
+    """
+    Bazaar
+
+    The Bazaar version control system
+    """
     file = os.path.join(path, '.bzr/branch/last-revision')
     if not os.path.exists(file):
         return None
@@ -313,35 +311,29 @@ def bzr(path, string, unknown):
         with open(file, 'r') as f:
             for line in f:
                 line = line.strip()
-                revision = line.split()[0]
-                hash = line.rsplit('-', 1)[0][:7]
+                revision, hash = line.split(' ', 1)
+                # compensate for empty Bazaar repositories
+                if hash == 'null:':
+                    hash = unknown
+                else:
+                    hash = hash.rsplit('-', 1)[-1][:7]
                 break
 
 
     # status
     if '%i' in string:
-        command = 'bzr status'
+        command = 'bzr status --short'
         process = Popen(command.split(), stdout=PIPE)
         output = process.communicate()[0]
         returncode = process.returncode
 
         if not returncode:
-            # the list of headers in 'bzr status' output
-            headers = {'added': 'A',
-                       'modified': 'M',
-                       'removed': 'R',
-                       'renamed': 'V',
-                       'kind changed': 'K',
-                       'unknown': '?'}
-            headers_regex = '%s:' % '|'.join(headers.keys())
-
             status = ''
             for line in output.split('\n'):
                 line = line.strip()
-                if re.match(headers_regex, line):
-                    header = line.split(':')[0]
-                    status = '%s%s' % (status, headers[header])
-
+                if not line:
+                    continue
+                status += line[0]
             status = sorted_alpha(status)
 
     # formatting
@@ -353,10 +345,13 @@ def bzr(path, string, unknown):
     return string
 
 
-@vcs('CVS', 'Concurrent Versions System.')
+@vcs
 def cvs(path, string, unknown):
-    # Stabbing in the dark here
-    # TODO make this not suck
+    """
+    CVS
+
+    Concurrent Versions System.
+    """
     file = os.path.join(path, 'CVS/')
     if not os.path.exists(file):
         return None
@@ -371,10 +366,13 @@ def cvs(path, string, unknown):
     return string
 
 
-@vcs('Darcs', 'Distributed. Interactive. Smart.')
+@vcs
 def darcs(path, string, unknown):
-    # It's almost a given that everything in here is
-    # going to be wrong
+    """
+    Darcs
+
+    Distributed. Interactive. Smart.
+    """
     file = os.path.join(path, '_darcs/hashed_inventory')
     if not os.path.exists(file):
         return None
@@ -418,8 +416,13 @@ def darcs(path, string, unknown):
     return string
 
 
-@vcs('Fossil', 'The Fossil version control system.')
+@vcs
 def fossil(path, string, unknown):
+    """
+    Fossil
+
+    The Fossil version control system.
+    """
     file = os.path.join(path, '_FOSSIL_')
     if not os.path.exists(file):
         return None
@@ -473,7 +476,7 @@ def fossil(path, string, unknown):
         if not returncode and output:
             if status == unknown:
                 status = ''
-            status = "%s?" % status
+            status = '%s?' % status
 
         command = 'fossil changes'
         process = Popen(command.split(), stdout=PIPE)
@@ -488,7 +491,7 @@ def fossil(path, string, unknown):
             for line in output.split('\n'):
                 line = line.strip()
                 if line:
-                    status = "%s%s" % (status, line[0])
+                    status = '%s%s' % (status, line[0])
 
             status = sorted_alpha(status)
 
@@ -501,8 +504,13 @@ def fossil(path, string, unknown):
     return string
 
 
-@vcs('Git', 'The fast version control system.')
+@vcs
 def git(path, string, unknown):
+    """
+    Git
+
+    The fast version control system.
+    """
     file = os.path.join(path, '.git/')
     if not os.path.exists(file):
         return None
@@ -514,8 +522,8 @@ def git(path, string, unknown):
         with open(branch_file, 'r') as f:
             for line in f:
                 line = line.strip()
-                if re.match('^ref: refs/heads/', line.strip()):
-                    branch = (line.split('/')[-1] or unknown).strip()
+                if re.match('^ref: refs/heads/', line):
+                    branch = (line.split('/')[-1] or unknown)
                     break
 
         # hash/revision
@@ -555,37 +563,49 @@ def git(path, string, unknown):
     return string
 
 
-@vcs('Mercurial', 'The Mercurial version control system.')
+@vcs
 def hg(path, string, unknown):
-    file = os.path.join(path, '.hg/branchheads.cache')
-    if not os.path.exists(file):
+    """
+    Mercurial
+
+    The Mercurial version control system.
+    """
+    file = os.path.join(path, '.hg')
+    if not os.path.isdir(file):
         return None
 
     branch = revision = hash = status = unknown
 
     # changeset ID or global hash
+    # this is probably far more complicated than it needs to be
     if re.search('%(r|h)', string):
-        cache_file = os.path.join(path, '.hg/tags.cache')
-        if os.path.exists(cache_file):
+        cache_files = map(lambda x: os.path.join(file, '%s.cache' % x),
+                          ['branchheads', 'tags'])
+        cache_files = filter(os.path.exists, cache_files)
+        if cache_files:
+            cache_file = cache_files[0]
             with open(cache_file, 'r') as f:
                 for line in f:
-                    revision, hash = line.strip().split()
+                    hash, revision = line.strip().split()
+                    # tags.cache file format is (revid, hash)
+                    # branchheads.cache is (hash, revid)
+                    if 'tags.cache' in cache_file:
+                        hash, revision = revision, hash
                     hash = hash[:7]
                     break
 
     # branch
-    if re.search('%(r|h|b)', string):
-        count = 0
-        with open(file, 'r') as f:
-            for line in f:
-                hash, revision_branch = line.split()
-                hash = hash[:7]
-                if count > 0:
-                    branch = revision_branch
+    if '%b' in string:
+        file = os.path.join(path, '.hg/branch')
+        # newer versions of Mercurial don't create the '.hg/branch*' files
+        # on running 'hg init', but the default branch is named 'default'
+        if not os.path.exists(file):
+            branch = 'default'
+        else:
+            with open(file, 'r') as f:
+                for line in f:
+                    branch = line.strip()
                     break
-                else:
-                    revision = revision_branch
-                count += 1
 
     # status
     if '%i' in string:
@@ -610,8 +630,13 @@ def hg(path, string, unknown):
     return string
 
 
-@vcs('Subversion', 'The Subversion version control system.')
+@vcs
 def svn(path, string, unknown):
+    """
+    Subversion
+
+    The Subversion version control system.
+    """
     file = os.path.join(path, '.svn/entries')
     if not os.path.exists(file):
         return None

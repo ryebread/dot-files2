@@ -40,9 +40,9 @@ function color {
     local yellow='\e[1;33m'
     local gray='\e[0;30m'
     local light_gray='\e[0;37m'
-    
-    local chosen="$(eval echo \$$1)" 
-    
+
+    local chosen="$(eval echo \$$1)"
+
     if [ $CURRENT_SHELL = 'zsh' ]; then
         echo "%{$chosen%}"
     else
@@ -58,7 +58,7 @@ function prompt_char {
 }
 
 function prompt_color() {
-    if [ "$USER" = "root" ]; then 
+    if [ "$USER" = "root" ]; then
         echo red
     else
         if [ -n "$SSH_TTY" ]; then
@@ -69,19 +69,30 @@ function prompt_color() {
     fi
 }
 
-function prompt_vcs_if_bash() {
-    if [ $CURRENT_SHELL = 'bash' ]; then
-        local vcs="$(eval echo $RPS1)"
-        [[ "$vcs" != "" ]] && echo " $vcs"
-    fi
+function prompt_vcs() {
+    local vcs="$(${DOT_FILES}/misc/vcprompt -f -‹%s:%b:%h›)"
+        # local vcs="$(eval echo $(${DOT_FILES}/misc/vcprompt.py -f -‹%b:%h›))"
+
+    echo "$vcs"
 }
 
-RPS1='$(${DOT_FILES}/misc/vcprompt.py -f ‹%b:%h›)'
+#RPS1='$(${DOT_FILES}/misc/vcprompt.py -f ‹%b:%h›)'
 
-if [[ $OS == "Windows_NT" ]]; then
+if [[ x$OS == "xWindows_NT" ]]; then
     PS1='\[\033]0;$MSYSTEM:\w\007
 \033[32m\]\u@\h \[\033[33m\w$(__git_ps1)\033[0m\]
-$ ' 
+$ '
 else
-    PS1="\[\$(color blue)\]\$(prompt_pwd)\[\$(color red)\]\$(prompt_vcs_if_bash) \[\$(color \$(prompt_color))\]\$(prompt_char)\[\$(color reset)\] "
+    if [ $CURRENT_SHELL = 'zsh' ]; then
+  # prompt (if running screen, show window #)
+        if [ x$WINDOW != x ]; then
+            export PS1="%{$fg[white]%}┌─[%{$fg[cyan]%}$WINDOW%{$fg[white]%}:%{$fg[green]%}%n%{$fg[cyan]%}@%{$fg[green]%}%m%{$fg[white]%}:%{$fg[yellow]%}%~%{$fg[white]%}]%{$fg[yellow]%}-%{$fg[red]%}[%{$fg[cyan]%}%*%{$fg[red]%}]%{$fg[red]%}\$(prompt_vcs)%{$reset_color%}%{$reset_color%}"$'\n'"%{$fg[white]%}└─>%{$fg[green]%}$(prompt_char)%{$reset_color%} "
+        else
+            export PS1="%{$fg[white]%}┌─[%{$fg[green]%}%n%{$fg[cyan]%}@%{$fg[green]%}%m%{$fg[white]%}:%{$fg[yellow]%}%~%{$fg[white]%}]%{$fg[yellow]%}-%{$fg[red]%}[%{$fg[cyan]%}%*%{$fg[red]%}]%{$fg[red]%}\$(prompt_vcs)%{$reset_color%}%{$reset_color%}"$'\n'"%{$fg[white]%}└─>%{$fg[green]%}$(prompt_char)%{$reset_color%} "
+        fi
+        export RPROMPT="%{$reset_color%}"
+    else
+#    PS1="\[\$(color blue)\]\$(prompt_pwd)\[\$(color red)\]\$(prompt_vcs) \[\$(color \$(prompt_color))\]\$(prompt_char)\[\$(color reset)\] "
+        PS1="\[$(color white)\]┌─[\[$(color green)\]\u\[$(color cyan)\]@\[$(color green)\]\h\[$(color white)\]:\[$(color yellow)\]\w\[$(color white)\]]\[$(color red)\]\$(prompt_vcs)\n\[$(color white)\]└─»\[$(color green)\]\$(prompt_char)\[$(color reset)\] "
+    fi
 fi
