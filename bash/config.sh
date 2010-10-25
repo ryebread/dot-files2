@@ -8,7 +8,7 @@ bind '"\e\e[C": forward-word'
 bind '"\e\e[D": backward-word'
 
 
-shopt -s checkwinsize histappend cdable_vars extglob nullglob cdspell cmdhist hostcomplete
+shopt -s checkwinsize histappend cdable_vars extglob cdspell cmdhist hostcomplete
 
 # Bash 4 and above only
 shopt -s globstar autocd checkjobs 2>/dev/null 

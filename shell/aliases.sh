@@ -1,11 +1,11 @@
 alias gi='sudo gem install'
+alias ls='ls --color=auto'
 alias ll='ls -lah'
 alias ..='cd ..;' # can then do .. .. .. to move up multiple directories.
 alias ...='.. ..'
 alias g='grep -i'  #case insensitive grep
 alias h='history|g'
 alias ducks='du -cks * | sort -rn |head -11' # Lists the size of all the folders
-alias top='top -o cpu'
 alias et="$EDITOR ."
 
 alias sprof="reload"
@@ -15,6 +15,7 @@ alias systail='tail -f -n0 /var/log/system.log'
 alias aptail='tail -f -n0 /var/log/apache*/*log'
 alias l='ls'
 alias b='cd -'
+alias e='LC_CTYPE=zh_CN.UTF-8 emacs &'
 
 alias c='clear' # shortcut to clear your terminal
 
